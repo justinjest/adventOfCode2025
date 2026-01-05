@@ -3,6 +3,9 @@
 *.log
 tmp/
 
+# Remove input data from AoC
+*.txt
+
 # Prerequisites
 *.d
 
