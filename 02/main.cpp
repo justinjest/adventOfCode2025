@@ -2,6 +2,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <algorithm>
+
 using namespace std;
 
 // Splits a string at a delimiter
@@ -35,20 +37,19 @@ auto splitString(string s, int frag) -> vector<string>{
 // 19 = false
 auto isSillyId(string num) -> bool {
   int len = num.length();
-  if (len % 2 != 0) {
-    // Must be an even length to have 2 repeats
-    return false;
-  }
   if (num[0] == '0') {
     // if the number starts with a 0 it can not be valid
     cout << "Unexpected item in input " << num << '\n';
     return false;
   }
-  vector<string> tmp = splitString(num, len/2);
-  if (tmp[0] == tmp[1]) {
-    cout << "Halves are " << tmp[0] << " & "<< tmp[1] << '\n';
-    return true;
+  for (int i = 1; i <= len/2; i++) {
+    vector<string> tmp = splitString(num, i);
+    int len = tmp.size();
+    int cnt = std::count(tmp.begin(), tmp.end(), tmp[0]);
+    if (len == cnt) {
+      return true;
     }
+  }
   return false;
 }
 
