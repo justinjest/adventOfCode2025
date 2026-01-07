@@ -6,31 +6,30 @@
 
 using namespace std;
 
+struct Range {
+  long start;
+  long end;
+};
+
+
 
 struct ProcessedData {
   vector<string> header; // This will get us the data to determine what is fresh
   vector<string> stock;  // This is what is in inventory
-};
+  vector<Range> ranges;
 
-struct FreshItems {
-  set<long> freshItems;
-
-  void addRange(string range) {
-    long start {};
-    long end {};
-    vector<string> numbers = split(range, "-");
-    start = stol(numbers[0]);
-    end = stol(numbers[1]);
-
-    for (long i = start; i <= end; i++ ) {
-      cout << "adding item " << i << '\n';
-      addFreshItem(i);
+  void unpackHeader() {
+    vector<Range> output {};
+    for (int i = 0; i < header.size(); i++) {
+       vector<string> strRange {split(header[i], "-")};
+       long start = stol(strRange[0]);
+       long end = stol(strRange[1]);
+       Range out {start, end};
+       output.push_back(out);
     }
-  }
+    ranges = output;
+  };
 
-  void addFreshItem(long num) {
-    freshItems.insert(num);
-  }
 
   // Splits a string at a delimiter
   auto split(std::string& s, const std::string& delim)
@@ -47,23 +46,25 @@ struct FreshItems {
     return tokens;
   }
 
-  auto isFresh(long num) -> bool {
-    int count = freshItems.count(num);
-    // Because this is a set this will either return 0 or 1 and maps to bool logic
-    return count;
+  bool isInRange(long num) {
+    for (long i = 0; i < ranges.size(); i++) {
+      if (num >= ranges[i].start && num <= ranges[i].end) {
+        return true;
+      }
+    }
+    return false;
   }
-
 };
 
 void printProcessedData(ProcessedData pd) {
-  for (double i = 0; i < pd.header.size(); i++){
-    cout << pd.header[i] << '\n';
+  for (double i = 0; i < pd.ranges.size(); i++){
+    cout << pd.ranges[i].start << " - " << pd.ranges[i].end << '\n';
   }
-  cout << "Starting stock list \n";
   for (double i = 0; i < pd.stock.size(); i++){
     cout << pd.stock[i] << '\n';
   }
-}
+
+};
 
 auto preProcess (string fileName) -> ProcessedData {
   ifstream myfile(fileName);
@@ -83,31 +84,23 @@ auto preProcess (string fileName) -> ProcessedData {
       }
     }
   }
+  output.unpackHeader();
   return output;
-}
+};
 
 auto main() -> int {
 
   ProcessedData data {};
   data = preProcess("input05.txt");
   cout << "Pre processing finished\n";
-  FreshItems freshList {};
-  for (unsigned long i = 0; i < data.header.size(); i++) {
-    cout << data.header[i] << '\n';
-    freshList.addRange(data.header[i]);
-  }
-
-  cout << "Header processed\n";
-  long totalFresh {0};
-  for (unsigned long i = 0; i < data.stock.size(); i++) {
-    if (freshList.isFresh(stoi(data.stock[i]))) {
+  printProcessedData(data);
+  long numFresh { 0 };
+  for (long i = 0; i < data.stock.size(); i++){
+    if(data.isInRange(stol(data.stock[i]))) {
       cout << data.stock[i] << " is fresh\n";
-      totalFresh++;
-    } else {
-      cout << data.stock[i] << " is not fresh\n";
+      numFresh++;
     }
   }
-
-  cout << "In total " << totalFresh << " items are fresh\n";
+  cout << numFresh << " fresh ingredients found\n";
   return 0;
-}
+};
