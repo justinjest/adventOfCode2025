@@ -12,7 +12,7 @@ class Data {
 
 public:
   void printData() {
-    for (int i = 0; i < numerals.size(); ++i) {
+    for (unsigned long i = 0; i < numerals.size(); ++i) {
       cout << numerals[i] << " ";
     }
     cout << '\n';
@@ -47,7 +47,7 @@ public:
 private:
   long sumData() {
     long res {};
-    for (int i = 0; i < numerals.size(); ++i) {
+    for (unsigned long i = 0; i < numerals.size(); ++i) {
       res += numerals[i];
     }
     return res;
@@ -56,7 +56,7 @@ private:
 
   long multData() {
     long res {1}; // Initalize at 1 so we don't get mult by 0
-    for (int i = 0; i < numerals.size(); ++i) {
+    for (unsigned long i = 0; i < numerals.size(); ++i) {
       res = res * numerals[i];
     }
     return res;
@@ -82,27 +82,25 @@ auto openFile(string fileName) -> vector<Data> {
   }
   cout << "Number of rows equals " << temp.size() << '\n';
   cout << "Number of cols equals " << temp[0].size() << '\n';
-  for (int i = 0; i < temp[0].size(); ++i) {
+  for (unsigned long i = 0; i < temp[0].size(); ++i) {
     Data currLine {};
     vector<int> tmp {};
     currLine.setOpp(temp[temp.size() - 1][i]); // opp is always last in list
-    cout << currLine.getOpp() << '\n';
-    for (int j = 0; j < temp.size() - 1; ++j) {
+    for (unsigned long j = 0; j < temp.size() - 1; ++j) {
      tmp.push_back(stoi(temp[j][i]));
     }
     currLine.setNumeral(tmp);
     output.push_back(currLine);
-    currLine.printData();
   }
   return output;
 }
 
 auto main() -> int {
 
-  vector<Data> data = openFile("example.txt");
+  vector<Data> data = openFile("input06.txt");
   cout << "Data processed\n";
   long total {0};
-  for (int i = 0; i < data.size();++i){
+  for (unsigned long i = 0; i < data.size();++i){
     data[i].printData();
     long value {data[i].processData()};
     cout << "This useses the " << data[i].getOpp() <<
