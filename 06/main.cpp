@@ -4,12 +4,11 @@
 #include <fstream>
 #include <sstream>
 #include <cctype>
+#include <algorithm>
 
 #include "Data.h"
 
 using namespace std;
-
-
 
 
 bool isWhitespace(std::string s){
@@ -47,9 +46,16 @@ vector<Data> openPart2(string fileName) {
   vector<int> test {};
   for (unsigned long item = 0; item < values.size(); ++item) {
     string s = values[item];
-    cout <<"|"<< values[item] <<"|"<< "itemSize " <<
-      values[item].size() <<'\n';
-    int i {stoi(values[item])};
+    // THIS DOES NOT WORK
+    // TODO: Fix
+    std::istringstream iss(s);
+    std::string word, result;
+
+    while (iss >> word) {
+        result += word;
+    }
+    std::cout << result << std::endl;
+    int i {stoi(result)};
     test.push_back(i);
   }
   return output;
