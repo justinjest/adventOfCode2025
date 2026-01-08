@@ -19,11 +19,60 @@ bool isWhitespace(std::string s){
     return true;
 }
 
-vector<Data> openPart2(string fileName) {
-  vector<Data> output {};
+string justDigits(string& s) {
+  string res {};
+  for (int i = 0; i < s.length(); ++i) {
+    if (isdigit(s[i])) {
+      res.append(1, s[i]);
+    }
+  }
+  return res;
+}
 
+vector<Data> processPart2 (vector<string> content) {
+  vector<Data> res {};
+  vector<int> values {};
+  vector<vector<long>> allData {};
+  string opp {};
+  bool oppSet {false};
+  for (unsigned long i = 0; i <= content[0].size(); ++i) {
+    if (!oppSet) {
+      opp = content[content.size()-1][i];
+      oppSet = true;
+    }
+    string value {""};
+    for (unsigned long j = 0; j < content.size(); ++j){
+      value.append(1, content[j][i]);
+    }
+    if (!isWhitespace(value) && !value.empty()){
+      values.push_back(stoi(justDigits(value)));
+    } else {
+      oppSet = false;
+
+      Data d {};
+      d.setNumeral(values);
+      d.setOpp(opp);
+
+      values = {};
+
+      res.push_back(d);
+    }
+  }
+  // Have to run it one last time to get all items
+  Data d {};
+  d.setNumeral(values);
+  d.setOpp(opp);
+
+  values = {};
+
+  res.push_back(d);
+
+  return res;
+}
+
+vector<Data> openPart2(string fileName) {
   ifstream myfile(fileName);
-  string line;
+  string line {};
   vector<string> content {};
   vector<vector<string>> temp {};
   if (myfile.is_open()) {
@@ -31,34 +80,7 @@ vector<Data> openPart2(string fileName) {
       content.push_back(line);
     }
   }
-  vector<string> values {};
-  vector<vector<long>> allData {};
-  for (unsigned long i = 0; i <= content[0].size(); ++i) {
-    string value {""};
-    for (unsigned long j = 0; j < content.size()-1; ++j){
-      value.append(1, content[j][i]);
-    }
-    if (!isWhitespace(value) && !value.empty()){
-      values.push_back(value);
-      }
-  }
-  cout << "Items in list\n";
-  vector<int> test {};
-  for (unsigned long item = 0; item < values.size(); ++item) {
-    string s = values[item];
-    // THIS DOES NOT WORK
-    // TODO: Fix
-    std::istringstream iss(s);
-    std::string word, result;
-
-    while (iss >> word) {
-        result += word;
-    }
-    std::cout << result << std::endl;
-    int i {stoi(result)};
-    test.push_back(i);
-  }
-  return output;
+  return processPart2(content);
 }
 
 auto openFile(string fileName) -> vector<Data> {
@@ -107,6 +129,13 @@ auto part1() {
 }
 
 auto main() -> int {
-  openPart2("example.txt");
+  vector<Data> data = openPart2("example.txt");
+  long sum {};
+  for (unsigned long i = 0; i < data.size(); ++i) {
+    long processedNumber {data[i].processData()};
+    cout << "Result is " << processedNumber  << '\n';
+    sum += processedNumber;
+  }
+  cout << "Total sum is " << sum << '\n';
   return 0;
 }
