@@ -35,7 +35,7 @@ vector<Data> processPart2 (vector<string> content) {
   vector<vector<long>> allData {};
   string opp {};
   bool oppSet {false};
-  for (unsigned long i = 0; i <= content[0].size(); ++i) {
+  for (unsigned long i = 0; i < content[1].size(); ++i) {
     if (!oppSet) {
       opp = content[content.size()-1][i];
       oppSet = true;
@@ -104,8 +104,8 @@ auto openFile(string fileName) -> vector<Data> {
   for (unsigned long i = 0; i < temp[0].size(); ++i) {
     Data currLine {};
     vector<int> tmp {};
-    currLine.Data::setOpp(temp[temp.size() - 1][i]); // opp is always last in list
-    for (unsigned long j = 0; j < temp.size() - 1; ++j) {
+    currLine.Data::setOpp(temp[temp.size()][i]); // opp is always last in list
+    for (unsigned long j = 0; j < temp.size(); ++j) {
      tmp.push_back(stoi(temp[j][i]));
     }
     currLine.Data::setNumeral(tmp);
@@ -129,10 +129,11 @@ auto part1() {
 }
 
 auto main() -> int {
-  vector<Data> data = openPart2("example.txt");
-  long sum {};
+  vector<Data> data = openPart2("input06.txt");
+  long sum {0};
   for (unsigned long i = 0; i < data.size(); ++i) {
     long processedNumber {data[i].processData()};
+    data[i].printData();
     cout << "Result is " << processedNumber  << '\n';
     sum += processedNumber;
   }
