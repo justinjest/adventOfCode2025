@@ -3,6 +3,12 @@
 #include <string>
 #include <vector>
 
+
+struct Result {
+  std::vector<std::string> result;
+  int splits;
+};
+
 auto openFile(std::string fileName) -> std::vector<std::string>{
 
   std::ifstream myfile(fileName);
@@ -79,65 +85,62 @@ std::string splitLine (std::string& oldLine, std::string& currLine) {
   return newLine;
 }
 
-std::vector<std::string> splitLinePart2(std::vector<std::string> input) {
-  std::vector<std::string> output {};
-  std::string newLine (input[0].length(), '.');
+Result processData2(std::vector<std::string> input) {
+  std::vector<std::string> output { input };
   static int splits {};
-  for (int j = 1; j < input.size(); ++j) {
-  for (int i = 0; i < input[0].length(); ++i) {
-    char cCurr = input[j][i];
-    char cLast = input[j][i - 1];
-    switch (cCurr) {
-    case '.':
-      if (cCurr != '|' && cLast != '|')
-        newLine[i] = '.';
-      else if (cLast == '|' || newLine[i] == '|') {
-        newLine[i] = '|';
+  output[0] = splitLineFirst(input[0]);
+  long unsigned len { output.size() };
+  for (int j = 1; j < len; ++j) {
+    for (int i = 0; i < output[j].length(); ++i) {
+      char cCurr = output[j][i];
+      char cLast = output[j-1][i];
+      switch (cCurr) {
+      case '.':
+        if (cCurr != '|' && cLast != '|')
+          output[j][i] = '.';
+        else if (cLast == '|' || cCurr == '|') {
+          output[j][i] = '|';
+        }
+        break;
+      case 'S':
+        output[j][i] = '|';
+        break;
+      case '^':
+        if (cLast == '|'){
+          ++splits;
+          output[j][i-1] = '|';
+          output[j][i] = '^';
+          output[j][i+1] = '|';
+        } else {
+          output[j][i] = '^';
+        }
+        break;
+      case '|':
+        output[j][i] = '|';
+        break;
       }
-      break;
-    case 'S':
-      newLine[i] = '|';
-      break;
-    case '^':
-      if (cLast == '|'){
-        ++splits;
-        newLine[i-1] = '|';
-        newLine[i] = '^';
-        newLine[i+1] = '|';
-        input[j][i+1] = '|';
-      } else {
-        newLine[i] = '^';
-      }
-      break;
-    case '|':
-      newLine[i] = '|';
-      break;
     }
   }
-  output.push_back(newLine);
-  }
   std::cout << "Splits this line " << splits << '\n';
-
-  return output;
+  printStringVector(output);
+  Result res {output, splits};
+  return res;
 }
 
 std::vector<std::string> processDataPart1 (std::vector<std::string> input) {
   std::vector<std::string> output { input };
-  output = splitLinePart2(input);
+  output[0] = splitLineFirst(output[0]);
+  for (int i = 1; i < output.size(); ++i) {
+    output[i] = splitLine(output[i-1], output[i]);
+  }
   return output;
 }
 
-
-std::vector<std::string> processDataPart2 (std::vector<std::string> input) {
-  std::vector<std::string> output {input};
-  output = splitLinePart2(input);
-  return output;
-}
 
 auto main() -> int {
 
-  std::vector<std::string> rawData {openFile("input07.txt")};
+  std::vector<std::string> rawData {openFile("example.txt")};
   std::cout << "Output\n";
-  std::vector<std::string> processedData {processDataPart1(rawData)};
+  Result datapart2 = processData2(rawData);
   return 0;
 }
