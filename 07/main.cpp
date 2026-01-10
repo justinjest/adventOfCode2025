@@ -16,14 +16,14 @@ struct SplitLine {
 
 struct Position {
   char character;
-  long number_splits;
+  unsigned long long number_splits;
 
   void init(char c, long i) {
     character = c;
     number_splits = i;
   }
 
-  void addSplits(long n) {
+  void addSplits(unsigned long long n) {
     number_splits += n;
   }
 
@@ -148,7 +148,7 @@ std::vector<std::string> processData1 (std::vector<std::string> input) {
 void printArrayData(std::vector<std::vector<Position>> input) {
   for (int i = 0; i < input.size(); ++i) {
     for (int j = 0; j < input[0].size(); ++j) {
-      std::cout << input[i][j].character;
+      std::cout << input[i][j].number_splits << "|";
     }
     std::cout << '\n';
   }
@@ -173,14 +173,22 @@ std::vector<std::vector<Position>> processInput(std::vector<std::string> input) 
   return result;
 }
 
+void printLine(std::vector<Position> input) {
+  long long sum {};
+  for (unsigned long i = 0; i < input.size(); ++i) {
+    sum += input[i].number_splits;
+    }
+  std::cout << "Total number of splits in last line is " << sum << '\n';
+}
+
 void processData3(std::vector<std::string> input) {
   // In this we one we are going to read the open file and extract it
   // into a vec(vec(bit)) which I can use to propogate the number of
   // splits this takes
   std::vector<std::vector<Position>> result = processInput(input);
 
-  for (int i = 1; i < result.size(); ++i) {
-    for (int j = 0; j < result[0].size(); ++j) {
+  for (unsigned long i = 1; i < result.size(); ++i) {
+    for (unsigned long j = 0; j < result[0].size(); ++j) {
     // TESTING
 
     Position curr = result[i][j];
@@ -190,16 +198,22 @@ void processData3(std::vector<std::string> input) {
 
     switch (cCurr) {
     case '.':
-      if (cCurr != '|' && cLast != '|')
+      if (cCurr != '|' && cLast != '|'){
         result[i][j].character = '.';
+        result[i][j].addSplits(result[i-1][j].number_splits);
+      }
       else if (cLast == '|' || cCurr == '|') {
         result[i][j].character = '|';
+        result[i][j].addSplits(result[i-1][j].number_splits);
       }
       break;
     case '^':
       if (cLast == '|'){
         result[i][j-1].character = '|';
+        result[i][j-1].addSplits(result[i-1][j].number_splits);
         result[i][j+1].character = '|';
+        result[i][j+1].addSplits(result[i-1][j].number_splits);
+        result[i][j+1].addSplits(result[i-1][j+1].number_splits);
       }
       break;
     case '|':
@@ -209,13 +223,14 @@ void processData3(std::vector<std::string> input) {
     }
   }
   std::cout << "End of testing\n";
-  printArrayData(result);
+  std::cout << '\n';
+  printLine(result[result.size() - 1]);
 }
 
 
 auto main() -> int {
 
-  std::vector<std::string> rawData {openFile("example.txt")};
+  std::vector<std::string> rawData {openFile("input07.txt")};
   //std::cout << "Output\n";
   //std::vector<std::string> datapart1 = processData1(rawData);
   //printStringVector(datapart1);
