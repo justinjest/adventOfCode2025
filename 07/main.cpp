@@ -14,6 +14,21 @@ struct SplitLine {
   int splits;
 };
 
+struct NumberRows {
+  char to_print;
+  long num_splits;
+
+  void init() {
+    to_print = '|';
+    num_splits = 1;
+  }
+
+  void sumNumberRows(NumberRows n) {
+    num_splits += n.num_splits;
+  }
+
+};
+
 auto openFile(std::string fileName) -> std::vector<std::string>{
 
   std::ifstream myfile(fileName);
@@ -35,6 +50,15 @@ void printStringVector(std::vector<std::string> input) {
   }
 }
 
+std::vector<std::string> sliceVecStr (std::vector<std::string>& arr, int x, int y) {
+  auto start = arr.begin() + x;
+  auto end = arr.begin() + 1 + y;
+
+  std::vector<std::string> res (y - x + 1);
+  copy(start, end, res.begin());
+  return res;
+}
+
 std::string splitLineFirst (std::string& oldLine) {
   std::string newLine (oldLine.length(), '.');
 
@@ -46,16 +70,18 @@ std::string splitLineFirst (std::string& oldLine) {
         newLine[i] = '.';
       break;
     case 'S':
-      newLine[i] = '|';
+      newLine[i] = '|'; // Make this be an integer one, no need to print to screen
       break;
       }
     }
   return newLine;
 }
 
+
 SplitLine splitLine (std::string& oldLine, std::string& currLine) {
   std::string newLine (currLine.length(), '.');
   int splits {};
+  int paths {};
   for (int i = 0; i < currLine.length(); ++i) {
     char cCurr = currLine[i];
     char cLast = oldLine[i];
@@ -82,11 +108,17 @@ SplitLine splitLine (std::string& oldLine, std::string& currLine) {
       }
       break;
     case '|':
+      if (oldLine[i-1]) {
+        ++paths;
+      }
+      if (oldLine[i+1]) {
+        ++paths;
+      }
       newLine[i] = '|';
       break;
     }
   }
-  SplitLine output {newLine, splits};
+  SplitLine output {newLine, paths};
   return output;
 }
 
@@ -117,9 +149,10 @@ std::vector<std::string> processData1 (std::vector<std::string> input) {
 auto main() -> int {
 
   std::vector<std::string> rawData {openFile("example.txt")};
-  std::cout << "Output\n";
+  //std::cout << "Output\n";
   //std::vector<std::string> datapart1 = processData1(rawData);
   //printStringVector(datapart1);
+  //std::cout << "Refactored\n";
   Result datapart2 {processData2(rawData)};
   printStringVector(datapart2.result);
   std::cout << "Splits this line " << datapart2.splits << '\n';
