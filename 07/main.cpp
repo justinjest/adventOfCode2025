@@ -14,17 +14,17 @@ struct SplitLine {
   int splits;
 };
 
-struct NumberRows {
-  char to_print;
-  long num_splits;
+struct Position {
+  char character;
+  long number_splits;
 
-  void init() {
-    to_print = '|';
-    num_splits = 1;
+  void init(char c, long i) {
+    character = c;
+    number_splits = i;
   }
 
-  void sumNumberRows(NumberRows n) {
-    num_splits += n.num_splits;
+  void addSplits(long n) {
+    number_splits += n;
   }
 
 };
@@ -145,6 +145,73 @@ std::vector<std::string> processData1 (std::vector<std::string> input) {
   return output;
 }
 
+void printArrayData(std::vector<std::vector<Position>> input) {
+  for (int i = 0; i < input.size(); ++i) {
+    for (int j = 0; j < input[0].size(); ++j) {
+      std::cout << input[i][j].character;
+    }
+    std::cout << '\n';
+  }
+}
+
+std::vector<std::vector<Position>> processInput(std::vector<std::string> input) {
+  std::vector<std::vector<Position>> result {};
+  for (int i = 0; i < input.size(); ++i) {
+    std::vector<Position> temp {};
+    for (int j = 0; j < input[0].size(); j++) {
+      Position p {};
+      if (input[i][j] == 'S') {
+        p.init('|', 1);
+      }
+      else {
+        p.init(input[i][j], 0);
+      }
+      temp.push_back(p);
+    }
+    result.push_back(temp);
+  }
+  return result;
+}
+
+void processData3(std::vector<std::string> input) {
+  // In this we one we are going to read the open file and extract it
+  // into a vec(vec(bit)) which I can use to propogate the number of
+  // splits this takes
+  std::vector<std::vector<Position>> result = processInput(input);
+
+  for (int i = 1; i < result.size(); ++i) {
+    for (int j = 0; j < result[0].size(); ++j) {
+    // TESTING
+
+    Position curr = result[i][j];
+    char cCurr = curr.character;
+    Position last = result[i-1][j];
+    char cLast = last.character;
+
+    switch (cCurr) {
+    case '.':
+      if (cCurr != '|' && cLast != '|')
+        result[i][j].character = '.';
+      else if (cLast == '|' || cCurr == '|') {
+        result[i][j].character = '|';
+      }
+      break;
+    case '^':
+      if (cLast == '|'){
+        result[i][j-1].character = '|';
+        result[i][j+1].character = '|';
+      }
+      break;
+    case '|':
+      break;
+    }
+    // TESTING
+    }
+  }
+  std::cout << "End of testing\n";
+  printArrayData(result);
+}
+
 
 auto main() -> int {
 
@@ -153,8 +220,6 @@ auto main() -> int {
   //std::vector<std::string> datapart1 = processData1(rawData);
   //printStringVector(datapart1);
   //std::cout << "Refactored\n";
-  Result datapart2 {processData2(rawData)};
-  printStringVector(datapart2.result);
-  std::cout << "Splits this line " << datapart2.splits << '\n';
+  processData3(rawData);
   return 0;
 }
