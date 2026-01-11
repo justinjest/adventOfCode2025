@@ -10,7 +10,6 @@ struct Point {
   int x;
   int y;
   int z;
-  bool connected;
 
   void printPoint(){
     std::cout << "X: " << x << '\n';
@@ -22,9 +21,52 @@ struct Point {
      return (x== rhs.x)
      && (y == rhs.y)
      && (z == rhs.z);
-  };
+  }
+
+  void print() {
+    std::cout << "X: " << x << " Y: " << y << " Z: " << z << '\n';
+  }
+
 };
 
+struct ConnectedNodes {
+  Point firstNode;
+  std::vector<Point> connections;
+
+  auto addConnection(Point start, Point connection) {
+    if (firstNode == start) {
+      connections.push_back(connection);
+    } else {
+      firstNode = start;
+      std::vector<Point> c {connection};
+      connections = c;
+    }
+  }
+
+  bool isConnected(Point connection) {
+    if (connection == firstNode) {
+      return true; // Should never end up here but if we do...
+    }
+    if (connections.size() > 0 ) {
+      for (int i = 0; i < connections.size(); ++i) {
+        if (connection == connections[i]) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  void print() {
+    firstNode.print();
+    std:: cout << "Connections:\n";
+    for (int i = 0; i < connections.size(); ++i) {
+      connections[i].print();
+    }
+    std::cout << '\n';
+  }
+
+};
 
 auto openFile(std::string fileName) {
   std::ifstream myfile(fileName);
@@ -68,7 +110,6 @@ auto strToPoint(std::string input) {
     p.x = intVals[0];
     p.y = intVals[1];
     p.z = intVals[2];
-    p.connected = false;
   }
   else {
     throw std::runtime_error("Too many values in strToPoint");
@@ -103,7 +144,33 @@ void printPoints(std::vector<Point> in) {
   }
 }
 
-std::vector<Point> findShortestDistances(std::vector<Point> points) {
+bool isConnected(std::vector<ConnectedNodes> c, Point p1, Point p2) {
+  for (int i = 0; i < c.size(); ++i) {
+    bool p1Found {false};
+    bool p2Found {false};
+    if (c[i].firstNode == p1) {
+      p1Found = true;
+    }
+    if (c[i].firstNode == p2) {
+      p2Found = true;
+    }
+    for (int j = 0; j < c[i].connections.size(); ++j) {
+      Point temp {c[i].connections[j]};
+      if (temp == p1) {
+        p1Found = true;
+      }
+      if (temp == p2) {
+        p2Found = true;
+      }
+    }
+    if (p1Found && p2Found) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::vector<ConnectedNodes> findShortestDistances(std::vector<Point> points, std::vector<ConnectedNodes> connections) {
   float smallestDist {std::numeric_limits<float>::max()}; // Should be positive
   int loc0 {0}; // location in index where smallest point is
   int loc1 {0};
@@ -111,60 +178,39 @@ std::vector<Point> findShortestDistances(std::vector<Point> points) {
     for (int j = i; j < points.size(); ++j) {
       if (j != i) {
         float temp {distanceBetweenPoints(points[i], points[j])};
-        if (temp < smallestDist) {
+        if (temp < smallestDist && !isConnected(connections, points[i], points[j])) {
           smallestDist = temp;
           loc0 = i;
           loc1 = j;
-          // This finds a single smallest point; running it
-          // for the 1,000 closest points will take 1000 more runs
         }
       }
     }
   }
   std::cout << "Smallest distance was found between points "
             << loc0 << " and " << loc1 << '\n';
-  std::vector<Point> result {points[loc0], points[loc1]};
-  return result;
-}
-
-
-void printConnections(std::vector<std::vector<Point>> connections) {
   for (int i = 0; i < connections.size(); ++i) {
-    printPoints(connections[i]);
-  }
-}
-
-void connectTwoPoints(Point p1, Point p2, std::vector<std::vector<Point>> connections) {
-  if (!p1.connected && !p2.connected) {
-    std::vector<Point> temp {p1, p2};
-    connections.push_back(temp);
-  } else if (p1.connected && p2.connected) {
-    return;
-  } else {
-    for (int i = 0;  i < connections.size(); ++i) {
-      for (int j = 0; j < connections[0].size(); ++j) {
-        Point pTemp { connections[i][j] };
-        if(p1 == pTemp) {
-          connections[i].push_back(p1);
-        }
-        else if (p2 == pTemp) {
-          connections[i].push_back(p2);
-        }
-      }
+    if (connections[i].firstNode == points[loc0]) {
+      connections[i].addConnection(points[loc0], points[loc1]);
+      return connections;
     }
   }
-  printConnections(connections);
+  ConnectedNodes node {};
+  node.addConnection(points[loc0], points[loc1]);
+  connections.push_back(node);
+  return connections;
 }
+
 
 auto main() -> int {
   std::vector<Point> points {processFile("example.txt")};
   printPoints(points);
-  std::vector<Point> pair {findShortestDistances(points)};
-  std::vector<std::vector<Point>> empty {};
-  std::cout << empty.size() << '\n';
-  for (int i = 0; i < 10; ++i){
-    connectTwoPoints(Pair[0], Pair[1], empty);
-
+  std::vector<ConnectedNodes> connections {};
+  for (int i =0; i < 10; ++i) {
+    std::cout << "Ran " << i << " times\n";
+    connections =  findShortestDistances(points, connections);
+  }
+  for (int i = 0; i < connections.size(); ++i) {
+    connections[i].print();
   }
   return 0;
 }
