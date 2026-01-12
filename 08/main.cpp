@@ -4,6 +4,8 @@
 #include <fstream>
 #include <vector>
 #include <limits>
+#include <algorithm>
+#include <unordered_map>
 
 struct Point {
   // 3d point in space
@@ -29,6 +31,45 @@ struct Point {
 
 };
 
+class UnionFind {
+  std::vector<int> parent;
+
+public:
+  UnionFind(int s) {
+    parent.resize(s);
+    for (int i = 0; i < s; ++i){
+      parent[i] = i;
+    }
+  }
+
+  int getSize() {
+    return parent.size();
+  }
+
+  int find(int i) {
+    if (parent[i] == i) {
+      return i;
+    }
+    return find(parent[i]);
+  }
+
+  void unite(int i, int j) {
+
+    int irep = find(i);
+
+    int jrep = find(j);
+
+    parent[irep] = jrep;
+
+  }
+
+  void print(){
+    for (int i = 0; i < parent.size(); ++i) {
+      std::cout << parent[i] << '\n';
+    }
+  }
+};
+
 struct ConnectedNodes {
   Point firstNode;
   std::vector<Point> connections;
@@ -36,7 +77,10 @@ struct ConnectedNodes {
   auto addConnection(Point start, Point connection) {
     if (firstNode == start) {
       connections.push_back(connection);
-    } else {
+    } else if
+      (std::find(connections.begin(), connections.end(), start) != connections.end()) {
+      connections.push_back(connection);
+    }else {
       firstNode = start;
       std::vector<Point> c {connection};
       connections = c;
@@ -170,47 +214,54 @@ bool isConnected(std::vector<ConnectedNodes> c, Point p1, Point p2) {
   return false;
 }
 
-std::vector<ConnectedNodes> findShortestDistances(std::vector<Point> points, std::vector<ConnectedNodes> connections) {
+UnionFind connectNode(UnionFind uf, int loc1, int loc2) {
+  uf.unite(loc1, loc2);
+
+  return uf;
+}
+
+UnionFind findShortestDistances(std::vector<Point> points, UnionFind uf) {
   float smallestDist {std::numeric_limits<float>::max()}; // Should be positive
   int loc0 {0}; // location in index where smallest point is
   int loc1 {0};
   for (int i = 0; i < points.size(); ++i) {
     for (int j = i; j < points.size(); ++j) {
-      if (j != i) {
-        float temp {distanceBetweenPoints(points[i], points[j])};
-        if (temp < smallestDist && !isConnected(connections, points[i], points[j])) {
-          smallestDist = temp;
-          loc0 = i;
-          loc1 = j;
-        }
+      float temp {distanceBetweenPoints(points[i], points[j])};
+      if (temp < smallestDist && (uf.find(i) != uf.find(j))) {
+        smallestDist = temp;
+        loc0 = i;
+        loc1 = j;
       }
     }
   }
   std::cout << "Smallest distance was found between points "
             << loc0 << " and " << loc1 << '\n';
-  for (int i = 0; i < connections.size(); ++i) {
-    if (connections[i].firstNode == points[loc0]) {
-      connections[i].addConnection(points[loc0], points[loc1]);
-      return connections;
-    }
-  }
-  ConnectedNodes node {};
-  node.addConnection(points[loc0], points[loc1]);
-  connections.push_back(node);
-  return connections;
+  return connectNode(uf, loc0, loc1);
 }
 
+std::vector<ConnectedNodes> mergeNodes(std::vector<ConnectedNodes> c) {
+  std::vector<ConnectedNodes> merged {};
+  for (int i = 0; i < c.size(); ++i) {
+    ConnectedNodes temp {};
+    temp.firstNode = c[i].firstNode;
+    for (int j = 0; j < c[i].connections.size(); ++j) {
+      temp.connections.push_back(c[i].connections[j]);
+    }
+    merged.push_back(temp);
+  }
+  return merged;
+}
 
 auto main() -> int {
   std::vector<Point> points {processFile("example.txt")};
   printPoints(points);
-  std::vector<ConnectedNodes> connections {};
-  for (int i =0; i < 10; ++i) {
+  int size = points.size();
+  UnionFind uf(size);
+  int numConnections {10};
+  for (int i =0; i < numConnections; ++i) {
     std::cout << "Ran " << i << " times\n";
-    connections =  findShortestDistances(points, connections);
+    uf = findShortestDistances(points, uf);
   }
-  for (int i = 0; i < connections.size(); ++i) {
-    connections[i].print();
-  }
+  uf.print();
   return 0;
 }
