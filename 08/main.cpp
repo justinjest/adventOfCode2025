@@ -33,16 +33,18 @@ struct Point {
 
 class UnionFind {
   std::vector<int> parent;
+  std::vector<int> numChildren;
 
 public:
   UnionFind(int s) {
     parent.resize(s);
+    numChildren.resize(s, 1);
     for (int i = 0; i < s; ++i){
       parent[i] = i;
     }
   }
 
-  int getSize() {
+  long getSize() {
     return parent.size();
   }
 
@@ -54,63 +56,27 @@ public:
   }
 
   void unite(int i, int j) {
-
     int irep = find(i);
-
     int jrep = find(j);
 
+    if (irep == jrep) return;
     parent[irep] = jrep;
+    numChildren[jrep] += numChildren[irep];
+  }
 
+  int findNumChildren(int i) {
+    int root = find(i);
+    return numChildren[root];
   }
 
   void print(){
     for (int i = 0; i < parent.size(); ++i) {
-      std::cout << parent[i] << '\n';
+      std::cout << parent[i] << ": ";
+      std::cout << "Num children: " << findNumChildren(i) << '\n';
     }
   }
 };
 
-struct ConnectedNodes {
-  Point firstNode;
-  std::vector<Point> connections;
-
-  auto addConnection(Point start, Point connection) {
-    if (firstNode == start) {
-      connections.push_back(connection);
-    } else if
-      (std::find(connections.begin(), connections.end(), start) != connections.end()) {
-      connections.push_back(connection);
-    }else {
-      firstNode = start;
-      std::vector<Point> c {connection};
-      connections = c;
-    }
-  }
-
-  bool isConnected(Point connection) {
-    if (connection == firstNode) {
-      return true; // Should never end up here but if we do...
-    }
-    if (connections.size() > 0 ) {
-      for (int i = 0; i < connections.size(); ++i) {
-        if (connection == connections[i]) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  void print() {
-    firstNode.print();
-    std:: cout << "Connections:\n";
-    for (int i = 0; i < connections.size(); ++i) {
-      connections[i].print();
-    }
-    std::cout << '\n';
-  }
-
-};
 
 auto openFile(std::string fileName) {
   std::ifstream myfile(fileName);
@@ -188,32 +154,6 @@ void printPoints(std::vector<Point> in) {
   }
 }
 
-bool isConnected(std::vector<ConnectedNodes> c, Point p1, Point p2) {
-  for (int i = 0; i < c.size(); ++i) {
-    bool p1Found {false};
-    bool p2Found {false};
-    if (c[i].firstNode == p1) {
-      p1Found = true;
-    }
-    if (c[i].firstNode == p2) {
-      p2Found = true;
-    }
-    for (int j = 0; j < c[i].connections.size(); ++j) {
-      Point temp {c[i].connections[j]};
-      if (temp == p1) {
-        p1Found = true;
-      }
-      if (temp == p2) {
-        p2Found = true;
-      }
-    }
-    if (p1Found && p2Found) {
-      return true;
-    }
-  }
-  return false;
-}
-
 UnionFind connectNode(UnionFind uf, int loc1, int loc2) {
   uf.unite(loc1, loc2);
 
@@ -234,34 +174,44 @@ UnionFind findShortestDistances(std::vector<Point> points, UnionFind uf) {
       }
     }
   }
-  std::cout << "Smallest distance was found between points "
-            << loc0 << " and " << loc1 << '\n';
   return connectNode(uf, loc0, loc1);
 }
 
-std::vector<ConnectedNodes> mergeNodes(std::vector<ConnectedNodes> c) {
-  std::vector<ConnectedNodes> merged {};
-  for (int i = 0; i < c.size(); ++i) {
-    ConnectedNodes temp {};
-    temp.firstNode = c[i].firstNode;
-    for (int j = 0; j < c[i].connections.size(); ++j) {
-      temp.connections.push_back(c[i].connections[j]);
-    }
-    merged.push_back(temp);
+auto ufToResult(UnionFind uf, int n) {
+  std::unordered_map<int, int> componentSizes {};
+
+  for (unsigned long i = 0; i < uf.getSize(); i++) {
+    int root = uf.find(i);
+    componentSizes[root] = uf.findNumChildren(root);
   }
-  return merged;
+
+  std::vector<int> sizes;
+  for (const auto& kv : componentSizes) {
+    sizes.push_back(kv.second);
+  }
+  std::sort(sizes.begin(), sizes.end(), std::greater<int>());
+
+  long long res {1};
+  for (unsigned long i = 0; i < n; ++i) {
+    std::cout << sizes[i] << '\n';
+    res *= sizes[i];
+  }
+
+  std::cout << "Final answer is " << res << '\n';
 }
 
 auto main() -> int {
   std::vector<Point> points {processFile("example.txt")};
   printPoints(points);
-  int size = points.size();
+  long size = points.size();
   UnionFind uf(size);
   int numConnections {10};
-  for (int i =0; i < numConnections; ++i) {
+  for (int i = 0; i < numConnections; ++i) {
     std::cout << "Ran " << i << " times\n";
     uf = findShortestDistances(points, uf);
   }
   uf.print();
+
+  ufToResult(uf, 3);
   return 0;
 }
