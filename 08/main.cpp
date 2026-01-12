@@ -13,11 +13,6 @@ struct Point {
   int y;
   int z;
 
-  void printPoint(){
-    std::cout << "X: " << x << '\n';
-    std::cout << "Y: " << y << '\n';
-    std::cout << "Z: " << z << '\n';
-  }
   bool operator==(const Point& rhs) const
   {
      return (x== rhs.x)
@@ -58,8 +53,9 @@ public:
   void unite(int i, int j) {
     int irep = find(i);
     int jrep = find(j);
-
-    if (irep == jrep) return;
+    if (irep == jrep){
+      return;
+      }
     parent[irep] = jrep;
     numChildren[jrep] += numChildren[irep];
   }
@@ -162,18 +158,22 @@ UnionFind connectNode(UnionFind uf, int loc1, int loc2) {
 
 UnionFind findShortestDistances(std::vector<Point> points, UnionFind uf) {
   float smallestDist {std::numeric_limits<float>::max()}; // Should be positive
+  static float lastSmallest {0};
   int loc0 {0}; // location in index where smallest point is
   int loc1 {0};
   for (int i = 0; i < points.size(); ++i) {
     for (int j = i; j < points.size(); ++j) {
       float temp {distanceBetweenPoints(points[i], points[j])};
-      if (temp < smallestDist && (uf.find(i) != uf.find(j))) {
+      if ((temp < smallestDist)
+          && (temp > lastSmallest)) {
         smallestDist = temp;
         loc0 = i;
         loc1 = j;
       }
     }
   }
+  lastSmallest = smallestDist;
+  std::cout << "Last x * x " << points[loc0].x * points[loc1].x << '\n';
   return connectNode(uf, loc0, loc1);
 }
 
@@ -201,17 +201,16 @@ auto ufToResult(UnionFind uf, int n) {
 }
 
 auto main() -> int {
-  std::vector<Point> points {processFile("example.txt")};
+  std::vector<Point> points {processFile("input08.txt")};
   printPoints(points);
   long size = points.size();
   UnionFind uf(size);
-  int numConnections {10};
-  for (int i = 0; i < numConnections; ++i) {
+  int i {0};
+  while (uf.findNumChildren(0) != points.size()) {
     std::cout << "Ran " << i << " times\n";
+    ++i;
     uf = findShortestDistances(points, uf);
   }
   uf.print();
-
-  ufToResult(uf, 3);
   return 0;
 }
