@@ -19,28 +19,40 @@ struct Point {
 
 };
 
-bool inNet(std::vector<Point> points, Point p) {
+bool inNet(std::vector<Point>& points, Point p) {
   bool inNet {false};
   for (int i = 0; i < points.size(); ++i) {
     Point a = points[i];
-    Point b= points[i-1];
+    Point b {};
+    if (i == 0) {
+      b = points.back();
+    } else {
+      b = points[i-1];
+    }
 
     if (p.x == a.x && p.y == a.y)
       return true;
 
     if ((a.y > p.y) != (b.y > p.y)) {
-      float slope = (p.x - a.x) * (b.y - a.y) - (b.x - a.x) * (p.y -a.y);
+      long slope = (p.x - a.x) * (b.y - a.y) - (b.x - a.x) * (p.y -a.y);
       if (slope == 0) // THis will probably error without rounding
         return true;
       if ((slope < 0) != (b.y < a.y))
-        inNet = !inNet;
+        inNet = !inNet; // This tracks the even/oddness of it
     }
   }
   return inNet;
 }
 
+void printRect(std::vector<Point> net) {
+  std::cout << "New net\n";
+  for (int i = 0; i < net.size(); ++i) {
+    net[i].print();
+  }
+}
+
 std::vector<Point> rectPoints(Point p1, Point p2) {
-  std::vector<Point> points {p1, p2};
+  std::vector<Point> points {};
   Point p3 {p1.x, p2.y};
   points.push_back(p3);
   Point p4 {p2.x, p1.y};
@@ -50,7 +62,7 @@ std::vector<Point> rectPoints(Point p1, Point p2) {
 
 bool rectInNet(Point p1, Point p2, std::vector<Point> points) {
   std::vector<Point> rect {rectPoints(p1, p2)};
-  for (int i =0; i < rect.size(); ++i) {
+  for (int i = 0; i < rect.size(); ++i) {
     if (!inNet(points, rect[i])) {
       return false;
     }
@@ -103,6 +115,7 @@ auto largestArea(std::vector<Point> points) {
       long test = points[i].getArea(points[j]);
       if (largestArea < test && (rectInNet(points[i], points[j], points))) {
         largestArea = test;
+        printRect(rectPoints(points[i], points[j]));
       }
     }
   }
@@ -136,11 +149,11 @@ auto processFile(std::string fileName) {
 
 
 auto main(int argc, char *argv[]) -> int {
-
   std::vector<Point> points {processFile("example.txt")};
-  for (int i = 0; i < points.size(); ++i){
-    points[i].print();
-  }
   largestArea(points);
+
+  points = processFile("input09.txt");
+  largestArea(points);
+
   return 0;
 }
