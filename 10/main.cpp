@@ -1,156 +1,87 @@
+#include "util.h"
+
+#include <cassert>
 #include <iostream>
-#include <fstream>
 #include <vector>
-#include <exception>
+#include <algorithm>
 
-struct InputLine {
-  std::vector<bool> truthtable;
-  std::vector<std::vector<int>> buttons;
-  std::vector<int> joltage;
+class Input {
+  InputLine input;
+  std::vector<bool> state;
 
-  void print() {
-    std::cout << "Truthtable: ";
-    for (int i = 0; i < truthtable.size(); ++i) {
-      if (truthtable[i]) {
-        std::cout << "#";
-      } else {
-        std::cout << ".";
-      }
+public:
+  auto pushButton (int index) {
+    for (size_t i = 0; i < input.buttons[index].size(); ++i) {
+      state[input.buttons[index][i]] = !state[input.buttons[index][i]];
     }
-    std::cout << '\n';
-    std::cout << "Buttons: ";
-    for (int i = 0; i < buttons.size(); ++i) {
-      std::cout << "(";
-      for (int j = 0; j < buttons[i].size()-1; ++j) {
-        std::cout << buttons[i][j] << ",";
-      }
-      std::cout << buttons[i].back();
-      std::cout << ") ";
-    }
-    std::cout << '\n';
-    std::cout << "Joltage: {";
-    for (int i = 0; i < joltage.size() - 1; ++i) {
-      std::cout << joltage[i] << ",";
-    }
-    std::cout << joltage.back();
-    std:: cout << "}\n";
   }
 
+  auto pushButtons (std::vector<size_t> button) {
+    for (size_t j = 0; j < button.size(); ++j) {
+      pushButton(button[j]);
+    }
+  }
+
+  auto isSolved() {
+    return state == input.truthTable;
+  }
+
+  Input() {
+    InputLine input {};
+    std::vector<bool> state;
+  }
+
+  Input(InputLine line) {
+    input = line;
+    size_t size = line.truthTable.size();
+    for (size_t i = 0; i < size; ++i){
+      state.push_back(false);
+    }
+  }
+
+  void print() {
+    input.print();
+  }
+
+  void printState() {
+    for (size_t i = 0; i < state.size(); ++i) {
+      std::cout << (state[i] ? '#' : '.');
+    }
+    std::cout << '\n';
+  }
+
+  auto smallestSolve() {
+    std::vector<bool> empty = state; // This needs to be done better
+    std::vector<int> perms(state.size(), 0);
+    perms.back() = 1;
+    int breakOut {0};
+    while (!isSolved() || breakOut <= 10){
+      std::cout << "new state\n";
+      state = empty;
+      for (size_t i = 0; i < perms.size(); ++i) {
+        if (perms[i] == 1)
+          pushButton(i);
+        if(isSolved()) return;
+      }
+      printState();
+      std::next_permutation(perms.begin(), perms.end());
+    }
+    breakOut++;
+  }
 
 };
 
-auto split(std::string& s, const std::string& delim) {
-  std::vector<std::string> tokens;
-  size_t pos = 0;
-  std::string token;
-  while ((pos = s.find(delim)) != std::string::npos) {
-    token = s.substr(0, pos);
-    tokens.push_back(token);
-    s.erase(0, pos+delim.length());
-  }
-  tokens.push_back(s);
-  return tokens;
-}
 
 
-
-auto openFile(std::string fileName) -> std::vector<std::string> {
-  std::ifstream myfile(fileName);
-  std::string line;
-  std::vector<std::string> input {};
-  if (myfile.is_open()) {
-    while (getline(myfile, line)) {
-      input.push_back(line);
-    }
-  }
-  return input;
-}
-
-auto extractTruthTable(std::string& line) -> std::vector<bool> {
-  std::vector<bool> truthTable {};
-  size_t start = line.find("[");
-  size_t end = line.rfind("]");
-  std::string_view substr = line.substr(start+1, end-start-1);
-  for (int i = 0; i < substr.size(); ++i) {
-    if (substr[i] == '.') {
-      truthTable.push_back(false);
-    } else if (substr[i] == '#') {
-      truthTable.push_back(true);
-    } else {
-      throw std::invalid_argument("Non truth value item in extract truth table");
-    }
-  }
-  return truthTable;
-}
-
-auto extractButtons(std::string& line) -> std::vector<std::vector<int>> {
-  std::vector<std::vector<int>> buttons {};
-  size_t start = line.find("(");
-  size_t end = line.rfind(")");
-  std::vector<std::string> temp {};
-  for (int i = start; i < end; ++i) {
-    if( line[i] == '(' ) {
-      for (int j = i; j <= end; ++j) {
-        if (line[j] == ')') {
-          temp.push_back(line.substr(i+1, j - i - 1));
-          break;
-        }
-      }
-      continue;
-    }  
-  }
-  for (int i = 0; i < temp.size(); ++i) {
-    auto effects {split(temp[i], ",")};
-    std::vector<int> tempButtons {};
-    for (int j = 0; j < effects.size(); ++j) {
-      tempButtons.push_back(stoi(effects[j]));
-    }
-    buttons.push_back(tempButtons);
-  }
-  return buttons;
-}
-
-auto extractJoltage(std::string& line) -> std::vector<int> {
-  std::vector<int> joltage {};
-  size_t start = line.find("{");
-  size_t end = line.rfind("}");
-  std::string substr = line.substr(start+1, end-start-1);
-
-  std::vector<std::string> jolt {split(substr, ",")};
-
-  for(int i = 0; i < jolt.size(); ++i) {
-    joltage.push_back(stoi(jolt[i]));
-  }
-  return joltage;
-}
-
-auto processLine (std::string& line) -> InputLine {
-  std::vector<bool> truthTable = extractTruthTable(line);
-  std::vector<std::vector<int>> buttons = extractButtons(line);
-  std::vector<int> joltage = extractJoltage(line);
-  InputLine output {truthTable, buttons, joltage};
-  return output;
-}
-
-auto processFile(std::string fileName) -> std::vector<InputLine> {
-  std::vector<std::string> raw = openFile(fileName);
-  std::string truthTable {};
-  std::vector<std::vector<int>> buttons {};
-  std::vector<int> joltage {};
-  std::vector<InputLine> output {};
-  for (int i = 0; i < raw.size(); ++i) {
-    InputLine input = processLine(raw[i]);
-    output.push_back(input);
-  }
-
-  return output;
-}
+auto main() -> int {
 
 
-auto main(int argc, char *argv[]) -> int {
   std::vector<InputLine> data {processFile("example.txt")};
-  for (int i = 0; i < data.size(); i++) {
-    data[i].print();
+  for (size_t i = 0; i < data.size(); i++) {
+    Input d {data[i]};
+    d.print();
+    d.printState();
+    d.smallestSolve();
   }
   return 0;
 }
