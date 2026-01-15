@@ -142,4 +142,3 @@ auto processFile(std::string fileName) -> std::vector<InputLine> {
 
   return output;
 }
-

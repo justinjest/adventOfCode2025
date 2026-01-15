@@ -78,7 +78,6 @@ auto openFile(std::string fileName) {
   std::ifstream myfile(fileName);
   std::string line;
   std::vector<std::string> input {};
-
   if (myfile.is_open()) {
     while (getline(myfile, line)) {
       input.push_back(line);
@@ -126,7 +125,6 @@ auto strToPoint(std::string input) {
 
 auto processFile(std::string fileName) {
   std::vector<std::string> raw = openFile(fileName);
-
   std::vector<Point> points {};
   for (int i = 0; i < raw.size(); ++i) {
     points.push_back(strToPoint(raw[i]));
